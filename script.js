@@ -2,6 +2,46 @@
    FUJISTREET — interacciones
    ============================================================ */
 
+// --- Pantalla de carga (preloader) ---
+(function () {
+  const preloader = document.getElementById("preloader");
+  if (!preloader) return;
+
+  const wordEl = document.getElementById("plWord");
+  const words = ["SUSHI", "STREET FOOD", "JAPONÉS", "VILLAVICENCIO", "寿司", "FRESCO"];
+  let wi = 0;
+  const rot = setInterval(() => {
+    wi = (wi + 1) % words.length;
+    if (wordEl) {
+      wordEl.style.opacity = "0";
+      setTimeout(() => {
+        wordEl.textContent = words[wi];
+        wordEl.style.opacity = "1";
+      }, 160);
+    }
+  }, 480);
+
+  const MIN = 1600, MAX = 4000;
+  const t0 = Date.now();
+  let hidden = false;
+
+  function hide() {
+    if (hidden) return;
+    hidden = true;
+    clearInterval(rot);
+    preloader.classList.add("pl--hide");
+    document.body.classList.remove("pl-lock");
+    setTimeout(() => preloader.remove(), 700);
+  }
+
+  window.addEventListener("load", () => {
+    const elapsed = Date.now() - t0;
+    setTimeout(hide, Math.max(0, MIN - elapsed));
+  });
+  // Tope de seguridad: si los videos tardan mucho, no dejamos la carga colgada
+  setTimeout(hide, MAX);
+})();
+
 // --- Menú móvil ---
 const burger = document.getElementById("burger");
 const navLinks = document.getElementById("navLinks");
