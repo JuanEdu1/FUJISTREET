@@ -79,7 +79,10 @@ const server = http.createServer((req, res) => {
     }
 
     const type = MIME[ext] || "application/octet-stream";
-    const cache = ext === ".html" ? "no-cache" : "public, max-age=86400";
+    // HTML/CSS/JS revalidan siempre (los cambios se ven al instante);
+    // imágenes/videos/fuentes se cachean largo (no cambian de nombre seguido).
+    const revalidate = ext === ".html" || ext === ".css" || ext === ".js";
+    const cache = revalidate ? "no-cache" : "public, max-age=86400";
 
     const headers = {
       "Content-Type": type,
