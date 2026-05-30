@@ -59,24 +59,27 @@ const server = http.createServer((req, res) => {
     return send(res, 403, { "Content-Type": "text/plain" }, "Forbidden");
   }
 
+  const ext = path.extname(filePath).toLowerCase();
+
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Fallback al index para rutas no encontradas
-      const fallback = path.join(ROOT, "index.html");
+      // Si la ruta NO tiene extensión (p.ej. /menu) servimos index.html (SPA).
+      // Si tiene extensión (styles.css, foto.webp...) devolvemos 404 REAL,
+      // nunca HTML disfrazado de CSS/imagen.
+      if (ext) {
+        console.warn(`404  ${urlPath}`);
+        return send(res, 404, { "Content-Type": "text/plain; charset=utf-8" }, "404 Not Found");
+      }
       return send(
         res,
-        err ? 404 : 200,
-        { "Content-Type": MIME[".html"] },
-        fs.createReadStream(fallback)
+        200,
+        { "Content-Type": MIME[".html"], "Cache-Control": "no-cache" },
+        fs.createReadStream(path.join(ROOT, "index.html"))
       );
     }
 
-    const ext = path.extname(filePath).toLowerCase();
     const type = MIME[ext] || "application/octet-stream";
-    // Cache: assets estáticos largo, html corto
-    const cache = ext === ".html"
-      ? "no-cache"
-      : "public, max-age=86400";
+    const cache = ext === ".html" ? "no-cache" : "public, max-age=86400";
 
     const headers = {
       "Content-Type": type,
@@ -91,4 +94,9 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Fujistreet sirviéndose en http://${HOST}:${PORT}`);
+  // Diagnóstico: confirma que los archivos clave existen en el contenedor
+  ["index.html", "styles.css", "script.js", "static/Logo.png"].forEach((f) => {
+    const ok = fs.existsSync(path.join(ROOT, f));
+    console.log(`  ${ok ? "OK " : "FALTA"}  ${f}`);
+  });
 });
